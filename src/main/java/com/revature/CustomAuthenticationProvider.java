@@ -13,9 +13,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import com.revature.model.Authorities;
 import com.revature.model.User;
-import com.revature.repository.AuthoritiesRepository;
 import com.revature.repository.UserRepository;
 
 @Component
@@ -25,9 +23,6 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 	private UserRepository userRepository;
 	
 	@Autowired
-	private AuthoritiesRepository authoritiesRepository;
-	
-	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	@Override
@@ -35,11 +30,15 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 		String username = authentication.getName();
 		String password = authentication.getCredentials().toString();
 		User user = userRepository.findByUsername(username);
-		if (user != null && passwordEncoder.matches(password, user.getPassword())) {
-			List<Authorities> authorities = authoritiesRepository.findByUser(user);
-			final List<GrantedAuthority> grantedAuthorities = authorities.stream().map(a -> new SimpleGrantedAuthority(a.getAuthority())).collect(Collectors.toList());
+		User authorized = null;
+		if (passwordEncoder.matches(password, user.getPassword())) {
+			authorized = user;
+			user = null;
+		}
+		if (authorized != null && passwordEncoder.matches(password, authorized.getPassword())) {
+			final List<GrantedAuthority> grantedAuthorities = authorized.getAuthorities().stream().map(a -> new SimpleGrantedAuthority(a.getAuthority())).collect(Collectors.toList());
 			final org.springframework.security.core.userdetails.UserDetails principal = new org.springframework.security.core.userdetails.User(username, password, grantedAuthorities);
-			final Authentication auth = new UsernamePasswordAuthenticationToken(principal, null, null);
+			final Authentication auth = new UsernamePasswordAuthenticationToken(principal.getUsername(), principal.getPassword(), principal.getAuthorities());
 			return auth;
 		} else {
 			System.out.println("Something went wrong in CustomAuthenticationProvider....");
@@ -50,10 +49,6 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return authentication.equals(UsernamePasswordAuthenticationToken.class);
-	}
-	
-	public boolean passwordsMatch(String rawPassword) {
-		return passwordEncoder.matches(rawPassword, passwordEncoder.encode(rawPassword));
 	}
 
 }

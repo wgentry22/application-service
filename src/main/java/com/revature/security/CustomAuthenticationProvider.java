@@ -1,4 +1,4 @@
-package com.revature;
+package com.revature.security;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,6 +49,10 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
 	@Override
 	public boolean supports(Class<?> authentication) {
 		return authentication.equals(UsernamePasswordAuthenticationToken.class);
+	}
+	
+	public boolean passwordsMatch(String rawPassword) {
+		return passwordEncoder.matches(rawPassword, passwordEncoder.encode(rawPassword));
 	}
 
 }

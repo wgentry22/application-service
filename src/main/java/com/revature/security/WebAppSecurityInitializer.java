@@ -1,4 +1,4 @@
-package com.revature;
+package com.revature.security;
 
 import org.springframework.security.web.context.AbstractSecurityWebApplicationInitializer;
 

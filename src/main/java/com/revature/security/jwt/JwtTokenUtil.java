@@ -87,6 +87,6 @@ public class JwtTokenUtil implements Serializable {
         final Collection<? extends GrantedAuthority> authorities = Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
                         												 .map(SimpleGrantedAuthority::new)
                         												 .collect(Collectors.toList());
-        return new UsernamePasswordAuthenticationToken(userDetails, null, null);
+        return new UsernamePasswordAuthenticationToken(userDetails, "", authorities);
     }
 }

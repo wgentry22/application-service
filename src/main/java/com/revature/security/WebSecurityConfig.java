@@ -1,5 +1,7 @@
 package com.revature.security;
 
+import java.util.Arrays;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,8 +12,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.revature.security.jwt.JwtAuthenticationEntryPoint;
 import com.revature.security.jwt.JwtAuthenticationFilter;
 
 @Configuration
@@ -24,11 +29,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	private CustomUserDetailsService customUserDetailsService;
 	
-//	@Autowired
-//	private CustomAuthenticationProvider authProvider;
-//	
-//	@Autowired
-//	private JwtAuthenticationEntryPoint unauthorizedHandler;
+	@Autowired
+	private JwtAuthenticationEntryPoint unauthorizedHandler; 
 	
 	@Bean
 	public PasswordEncoder passwordEncoder() {
@@ -60,10 +62,22 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http
-		.authorizeRequests().antMatchers("/").permitAll().anyRequest().authenticated().and()
-		.addFilterBefore(authenticationTokenFilterBean(), UsernamePasswordAuthenticationFilter.class)
+		.cors()
+		.and().csrf().disable()
+		.authorizeRequests().antMatchers("/", "/webjars/**").permitAll().anyRequest().authenticated().and()
+		.addFilterBefore(authenticationFilter(), CustomAuthenticationFilter.class)
+		.addFilterBefore(authenticationTokenFilterBean(), CustomAuthenticationFilter.class)
+		.exceptionHandling().authenticationEntryPoint(unauthorizedHandler).and()
 		.authorizeRequests().anyRequest().hasAnyRole("ADMIN", "USER").and()
-		.cors().and().csrf().disable()
 		.httpBasic().disable();
+	}
+	
+	public CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration config = new CorsConfiguration();
+		config.setAllowedOrigins(Arrays.asList("http://localhost:4200"));
+		config.setAllowedMethods(Arrays.asList("GET", "POST", "OPTIONS"));
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/**", config);
+		return source;
 	}
 }

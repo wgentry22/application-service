@@ -1,5 +1,8 @@
 package com.revature.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.revature.service.ApplicationService;
 
 @RestController
-@PreAuthorize("hasRole('ROLE_ADMIN')")
 public class ApplicationController {
 	
 	private static Logger log = LoggerFactory.getLogger(ApplicationController.class);
@@ -21,15 +23,32 @@ public class ApplicationController {
 	private ApplicationService applicationService;
 	
 	@RequestMapping("/")
+	@PreAuthorize("hasRole('ROLE_ADMIN')")
 	public String getMessageFromService() {
 		log.info("Inside ApplicationController.getMessageFromService() method");
-		return applicationService.getMessage() + ", " + SecurityContextHolder.getContext().getAuthentication().getName() + "!";
+		return applicationService.getMessage() + " " + SecurityContextHolder.getContext().getAuthentication().toString();
 	}
 	
 	@PostMapping("/")
 	public String getMessageFromServiceSecure() {
-		log.info("Inside ApplicationController.getMessageFromService() method");
-		return applicationService.getMessage() + " " + SecurityContextHolder.getContext().getAuthentication().getName();
+		log.info("Inside ApplicationController.getMessageFromServiceSecure() method");
+		return applicationService.getMessage() + " " + SecurityContextHolder.getContext().getAuthentication().toString();
+	}
+	
+	@PostMapping("/test-feign")
+	public Map<String, String> testFeignClient() {
+		log.info("Inside ApplicationController.testFeignClient()");
+		Map<String, String> message = new HashMap<>();
+		message.put("message", applicationService.getMessage() + " using FeignClients, (Admin) " + SecurityContextHolder.getContext().getAuthentication().getName() + "!");
+		return message;
+	}
+	
+	@PostMapping("/test-feign-user")
+	public Map<String, String> testFeignClientUser() {
+		log.info("Inside ApplicationConteoller.testFeignClientsUser()");
+		Map<String, String> message = new HashMap<>();
+		message.put("message", applicationService.getMessage() + " using FeignClients, (User) " + SecurityContextHolder.getContext().getAuthentication().getName() + "!");
+		return message;
 	}
 	
 	@RequestMapping("/another-endpoint")

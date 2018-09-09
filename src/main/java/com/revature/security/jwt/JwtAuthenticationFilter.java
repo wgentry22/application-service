@@ -14,16 +14,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.revature.security.CustomUserDetailsService;
 
 import io.jsonwebtoken.ExpiredJwtException;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	
 	@Autowired
-	private UserDetailsService userDetailsService;
+	private CustomUserDetailsService customUserDetailsService;
 	
 	@Autowired
 	private JwtTokenUtil jwtTokenUtil;
@@ -46,13 +47,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             logger.warn("couldn't find bearer string, will ignore the header");
         }
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+            UserDetails userDetails = customUserDetailsService.loadByUsername(username);
             if (jwtTokenUtil.validateToken(authToken, userDetails)) {
                 UsernamePasswordAuthenticationToken authentication = jwtTokenUtil.getAuthentication(authToken, SecurityContextHolder.getContext().getAuthentication(), userDetails);
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
                 logger.info("authenticated user " + username + ", setting security context");
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                res.addHeader("Authorization", "Bearer " + authToken);
+                res.addHeader("Authorization", "Bearer " + jwtTokenUtil.generateToken(authentication));
             }
         }
 
